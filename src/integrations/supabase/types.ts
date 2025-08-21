@@ -14,7 +14,101 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      agendamentos: {
+        Row: {
+          created_at: string
+          data_hora: string
+          id: number
+          id_imovel: number
+          nome_cliente: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          data_hora: string
+          id?: number
+          id_imovel: number
+          nome_cliente: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          data_hora?: string
+          id?: number
+          id_imovel?: number
+          nome_cliente?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agendamentos_id_imovel_fkey"
+            columns: ["id_imovel"]
+            isOneToOne: false
+            referencedRelation: "imoveis"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      imoveis: {
+        Row: {
+          bairro: string | null
+          cep: string | null
+          cidade: string | null
+          codigo: string
+          complemento: string | null
+          created_at: string
+          descricao: string | null
+          estado: string | null
+          foto_capa: string | null
+          id: number
+          numero: string | null
+          rua: string | null
+          status: string
+          tipo: string
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
+          codigo: string
+          complemento?: string | null
+          created_at?: string
+          descricao?: string | null
+          estado?: string | null
+          foto_capa?: string | null
+          id?: number
+          numero?: string | null
+          rua?: string | null
+          status?: string
+          tipo: string
+          updated_at?: string
+          valor?: number
+        }
+        Update: {
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
+          codigo?: string
+          complemento?: string | null
+          created_at?: string
+          descricao?: string | null
+          estado?: string | null
+          foto_capa?: string | null
+          id?: number
+          numero?: string | null
+          rua?: string | null
+          status?: string
+          tipo?: string
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
