@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ImovelWithAgendamento } from "@/types/imovel";
-import { MapPin, Calendar, Trash2, Image as ImageIcon } from "lucide-react";
+import { MapPin, Calendar, Trash2, Image as ImageIcon, Edit } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -10,9 +10,10 @@ interface ImovelCardProps {
   imovel: ImovelWithAgendamento;
   onAgendar: (imovel: ImovelWithAgendamento) => void;
   onExcluir: (id: number) => void;
+  onEditar: (imovel: ImovelWithAgendamento) => void;
 }
 
-const ImovelCard = ({ imovel, onAgendar, onExcluir }: ImovelCardProps) => {
+const ImovelCard = ({ imovel, onAgendar, onExcluir, onEditar }: ImovelCardProps) => {
   const formatarValor = (valor: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -123,6 +124,15 @@ const ImovelCard = ({ imovel, onAgendar, onExcluir }: ImovelCardProps) => {
           >
             <Calendar size={16} className="mr-1" />
             Agendar Visita
+          </Button>
+          
+          <Button
+            onClick={() => onEditar(imovel)}
+            variant="outline"
+            size="sm"
+            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+          >
+            <Edit size={16} />
           </Button>
           
           <Button

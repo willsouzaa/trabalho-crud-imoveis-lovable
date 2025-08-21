@@ -1,8 +1,23 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Imovel, ImovelWithAgendamento } from '@/types/imovel';
 import { toast } from '@/hooks/use-toast';
+
+// Tipo específico para inserir no banco (sem código pois é gerado automaticamente)
+type ImovelInsert = {
+  cep?: string | null;
+  rua?: string | null;
+  numero?: string | null;
+  complemento?: string | null;
+  bairro?: string | null;
+  cidade?: string | null;
+  estado?: string | null;
+  tipo: 'aluguel' | 'venda';
+  valor: number;
+  descricao?: string | null;
+  foto_capa?: string | null;
+  status: string;
+};
 
 export const useImoveis = () => {
   return useQuery({
@@ -35,13 +50,16 @@ export const useImoveis = () => {
         throw errorSem;
       }
 
-      // Combinar resultados
-      const todosImoveis = [
+      // Combinar resultados e garantir tipos corretos
+      const todosImoveis: ImovelWithAgendamento[] = [
         ...(imoveis?.map(item => ({
           ...item,
           agendamento: item.agendamentos?.[0]
-        })) || []),
-        ...(imoveisSemAgendamento || [])
+        } as ImovelWithAgendamento)) || []),
+        ...(imoveisSemAgendamento?.map(item => ({
+          ...item,
+          tipo: item.tipo as 'aluguel' | 'venda'
+        } as ImovelWithAgendamento)) || [])
       ];
 
       console.log('Imóveis encontrados:', todosImoveis);
@@ -54,12 +72,12 @@ export const useCreateImovel = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (imovel: Omit<Imovel, 'id' | 'codigo' | 'created_at' | 'updated_at'>) => {
+    mutationFn: async (imovel: ImovelInsert) => {
       console.log('Criando imóvel:', imovel);
       
       const { data, error } = await supabase
         .from('imoveis')
-        .insert([imovel])
+        .insert(imovel as any)
         .select()
         .single();
 
@@ -82,6 +100,45 @@ export const useCreateImovel = () => {
       toast({
         title: "Erro",
         description: "Erro ao cadastrar imóvel. Tente novamente.",
+        variant: "destructive",
+      });
+    },
+  });
+};
+
+export const useUpdateImovel = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, imovel }: { id: number; imovel: Partial<ImovelInsert> }) => {
+      console.log('Atualizando imóvel:', id, imovel);
+      
+      const { data, error } = await supabase
+        .from('imoveis')
+        .update(imovel)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Erro ao atualizar imóvel:', error);
+        throw error;
+      }
+
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['imoveis'] });
+      toast({
+        title: "Sucesso",
+        description: "Imóvel atualizado com sucesso!",
+      });
+    },
+    onError: (error) => {
+      console.error('Erro ao atualizar imóvel:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar imóvel. Tente novamente.",
         variant: "destructive",
       });
     },

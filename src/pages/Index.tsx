@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from "react";
 import { useImoveis, useDeleteImovel } from "@/hooks/useImoveis";
 import { ImovelWithAgendamento } from "@/types/imovel";
@@ -15,6 +14,7 @@ const Index = () => {
   const [modalCadastro, setModalCadastro] = useState(false);
   const [modalAgendamento, setModalAgendamento] = useState(false);
   const [imovelSelecionado, setImovelSelecionado] = useState<ImovelWithAgendamento | null>(null);
+  const [imovelParaEditar, setImovelParaEditar] = useState<ImovelWithAgendamento | null>(null);
   
   const [filtros, setFiltros] = useState({
     cidade: '',
@@ -50,6 +50,16 @@ const Index = () => {
     if (window.confirm('Tem certeza que deseja excluir este imóvel?')) {
       await deleteImovel.mutateAsync(id);
     }
+  };
+
+  const handleEditar = (imovel: ImovelWithAgendamento) => {
+    setImovelParaEditar(imovel);
+    setModalCadastro(true);
+  };
+
+  const handleCloseCadastro = () => {
+    setModalCadastro(false);
+    setImovelParaEditar(null);
   };
 
   // Filtrar imóveis
@@ -140,6 +150,7 @@ const Index = () => {
                       imovel={imovel}
                       onAgendar={handleAgendar}
                       onExcluir={handleExcluir}
+                      onEditar={handleEditar}
                     />
                   ))}
                 </div>
@@ -154,7 +165,8 @@ const Index = () => {
       {/* Modais */}
       <CadastroImovelModal
         open={modalCadastro}
-        onClose={() => setModalCadastro(false)}
+        onClose={handleCloseCadastro}
+        imovelParaEditar={imovelParaEditar}
       />
 
       <AgendamentoModal

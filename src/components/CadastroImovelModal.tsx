@@ -1,22 +1,25 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useCreateImovel } from "@/hooks/useImoveis";
+import { useCreateImovel, useUpdateImovel } from "@/hooks/useImoveis";
 import { useViaCEP } from "@/hooks/useViaCEP";
 import { supabase } from "@/integrations/supabase/client";
 import { Upload, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { ImovelWithAgendamento } from "@/types/imovel";
 
 interface CadastroImovelModalProps {
   open: boolean;
   onClose: () => void;
+  imovelParaEditar?: ImovelWithAgendamento | null;
 }
 
-const CadastroImovelModal = ({ open, onClose }: CadastroImovelModalProps) => {
+const CadastroImovelModal = ({ open, onClose, imovelParaEditar }: CadastroImovelModalProps) => {
+  const isEditMode = !!imovelParaEditar;
+  
   const [formData, setFormData] = useState({
     cep: '',
     rua: '',
@@ -34,7 +37,41 @@ const CadastroImovelModal = ({ open, onClose }: CadastroImovelModalProps) => {
   const [uploadingImage, setUploadingImage] = useState(false);
   
   const createImovel = useCreateImovel();
+  const updateImovel = useUpdateImovel();
   const { buscarCEP, loading: loadingCEP } = useViaCEP();
+
+  // Preencher formulário quando for edição
+  useEffect(() => {
+    if (isEditMode && imovelParaEditar) {
+      setFormData({
+        cep: imovelParaEditar.cep || '',
+        rua: imovelParaEditar.rua || '',
+        numero: imovelParaEditar.numero || '',
+        complemento: imovelParaEditar.complemento || '',
+        bairro: imovelParaEditar.bairro || '',
+        cidade: imovelParaEditar.cidade || '',
+        estado: imovelParaEditar.estado || '',
+        tipo: imovelParaEditar.tipo,
+        valor: imovelParaEditar.valor.toString(),
+        descricao: imovelParaEditar.descricao || '',
+      });
+    } else {
+      // Reset para modo de criação
+      setFormData({
+        cep: '',
+        rua: '',
+        numero: '',
+        complemento: '',
+        bairro: '',
+        cidade: '',
+        estado: '',
+        tipo: 'aluguel',
+        valor: '',
+        descricao: '',
+      });
+    }
+    setArquivo(null);
+  }, [isEditMode, imovelParaEditar, open]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -119,26 +156,18 @@ const CadastroImovelModal = ({ open, onClose }: CadastroImovelModalProps) => {
         tipo: formData.tipo,
         valor: parseFloat(formData.valor) || 0,
         descricao: formData.descricao || null,
-        foto_capa: fotoPath,
-        status: 'Disponível',
+        foto_capa: fotoPath || (isEditMode ? imovelParaEditar?.foto_capa : null),
+        status: isEditMode ? imovelParaEditar?.status || 'Disponível' : 'Disponível',
       };
 
-      await createImovel.mutateAsync(imovelData);
-      
-      // Reset form
-      setFormData({
-        cep: '',
-        rua: '',
-        numero: '',
-        complemento: '',
-        bairro: '',
-        cidade: '',
-        estado: '',
-        tipo: 'aluguel',
-        valor: '',
-        descricao: '',
-      });
-      setArquivo(null);
+      if (isEditMode && imovelParaEditar) {
+        await updateImovel.mutateAsync({
+          id: imovelParaEditar.id,
+          imovel: imovelData,
+        });
+      } else {
+        await createImovel.mutateAsync(imovelData);
+      }
       
       onClose();
     } catch (error) {
@@ -146,14 +175,14 @@ const CadastroImovelModal = ({ open, onClose }: CadastroImovelModalProps) => {
     }
   };
 
-  const isLoading = createImovel.isPending || uploadingImage || loadingCEP;
+  const isLoading = createImovel.isPending || updateImovel.isPending || uploadingImage || loadingCEP;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-[#1C355E]">
-            Cadastrar Novo Imóvel
+            {isEditMode ? 'Editar Imóvel' : 'Cadastrar Novo Imóvel'}
           </DialogTitle>
         </DialogHeader>
 
@@ -299,6 +328,11 @@ const CadastroImovelModal = ({ open, onClose }: CadastroImovelModalProps) => {
                   Arquivo selecionado: {arquivo.name}
                 </p>
               )}
+              {isEditMode && imovelParaEditar?.foto_capa && !arquivo && (
+                <p className="text-sm text-gray-600 mt-1">
+                  Imagem atual mantida
+                </p>
+              )}
             </div>
           </div>
 
@@ -318,7 +352,7 @@ const CadastroImovelModal = ({ open, onClose }: CadastroImovelModalProps) => {
               disabled={isLoading}
             >
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Salvar Imóvel
+              {isEditMode ? 'Atualizar Imóvel' : 'Salvar Imóvel'}
             </Button>
           </div>
         </form>
