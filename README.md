@@ -119,12 +119,12 @@ Passo a Passo
 
 Clone o repositório:
 
-git clone <SEU_GIT_URL>
+git clone https://github.com/willsouzaa/trabalho-crud-imoveis-lovable.git
 
 
 Entre na pasta do projeto:
 
-cd <NOME_DA_PASTA>
+cd trabalho-crud-imoveis-lovable
 
 
 Instale as dependências:
